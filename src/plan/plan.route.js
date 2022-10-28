@@ -5,4 +5,6 @@ const plan = express.Router();
 
 plan.get('/plan', planController.getPlan);
 
+plan.post('/plan/calculate', planController.calculate);
+
 export { plan };

@@ -1,0 +1,44 @@
+[
+    {
+        "Min": 0,
+        "Max": 226000,
+        "Basis": 0,
+        "TaxPercent": 18
+    },
+    {
+        "Min": 226000,
+        "Max": 353100,
+        "Basis": 40680,
+        "TaxPercent": 26
+    },
+    {
+        "Min": 353100,
+        "Max": 488700,
+        "Basis": 73726,
+        "TaxPercent": 31
+    },
+    {
+        "Min": 488700,
+        "Max": 641400,
+        "Basis": 115762,
+        "TaxPercent": 36
+    },
+    {
+        "Min": 641400,
+        "Max": 817600,
+        "Basis": 170734,
+        "TaxPercent": 39
+    },
+    {
+        "Min": 817600,
+        "Max": 1731600,
+        "Basis": 239452,
+        "TaxPercent": 41
+    },
+    {
+        "Min": 1731600,
+        "Max": 1669610000,
+        "Basis": 614192,
+        "TaxPercent": 45
+    }
+]
