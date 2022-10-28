@@ -1,9 +1,5 @@
-const planService = require('../plan/plan.service');
+import * as planService from '../plan/plan.service.js';
 
-const getPlan = ((req, res) => {
-    res.json(planService.retrievePlan());
+export const getPlan = ((_req, response) => {
+    response.json(planService.retrievePlan());
 });
-
-module.exports = {
-    getPlan
-}

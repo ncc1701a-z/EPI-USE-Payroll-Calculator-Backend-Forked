@@ -1,5 +1,3 @@
-function retrievePlan() {
-    return 'Hello World';
+export const retrievePlan = () => {
+    return 'Hello World'
 }
-
-module.exports = { retrievePlan };

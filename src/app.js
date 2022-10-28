@@ -1,17 +1,17 @@
-const express = require('express');
+import express from 'express';
+import routes from './routes/routes.js';
+
 const app = express();
-const path = require('path');
-const routes = require('./routes/routes');
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('./public'));
 
 // Routes
 app.use(routes);
 
 // Setup view engine
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', 'src/views');
 app.set('view engine', 'jade');
 
-module.exports = app;
-
+export { app };

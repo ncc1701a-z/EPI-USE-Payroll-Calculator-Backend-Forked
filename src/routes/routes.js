@@ -1,10 +1,14 @@
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+import { index } from '../routes/index.js';
+import { plan } from '../plan/plan.route.js';
 
-const indexRoute = require('../routes/index');
-const planRoute = require('../plan/plan.route');
+const routes = express.Router();
 
-router.use(indexRoute);
-router.use(planRoute);
+routes.use(index);
+routes.use(plan);
 
-module.exports = router;
+export default routes;
+
+
+
+

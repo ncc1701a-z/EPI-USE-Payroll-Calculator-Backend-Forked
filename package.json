@@ -2,8 +2,9 @@
   "name": "epi-use-payroll-calculator-backend",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "start": "nodemon ./src/main.js"
   },
   "dependencies": {
     "express": "~4.16.1",

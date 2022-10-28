@@ -1,9 +1,8 @@
-const express = require('express');
-const router = express.Router();
+import express  from 'express';
+import * as planController from '../plan/plan.controller.js';
 
-const planController = require('../plan/plan.controller');
+const plan = express.Router();
 
-router.get('/plan', planController.getPlan);
+plan.get('/plan', planController.getPlan);
 
-
-module.exports = router;
+export { plan };
