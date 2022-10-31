@@ -1,4 +1,4 @@
-import * as planService from '../plan/plan.service.js';
+import * as planService from '../services/plan.service.js';
 
 export const getPlan = (_req, res) => {
     res.json(planService.retrievePlan());
