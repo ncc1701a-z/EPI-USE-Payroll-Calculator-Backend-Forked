@@ -1,0 +1,10 @@
+{
+  "style": "amount",
+  "origin": "https://www.sars.gov.za/tax-rates/income-tax/rates-of-tax-for-individuals/",
+  "explain": "Threshold amount based on age",
+  "table": [
+    ["65", 91250],
+    ["75", 141250],
+    [null, 157900]
+  ]
+}

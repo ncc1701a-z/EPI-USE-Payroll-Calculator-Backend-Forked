@@ -56,7 +56,7 @@ export class InputValidationVisitor extends BaseVisitor {
   }
 
   visitDefineExternalInput(o) {
-    console.log(o)
+    (o)
   }
 }
 

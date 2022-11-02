@@ -1,5 +1,5 @@
 import * as BaseCommands from './baseCommands.js';
-import { Factory } from './factory.js'
+import { Factory } from './factory.js';
 
 export let dataStore = {};
 export let explainStore = {};
@@ -7,13 +7,12 @@ export let explainStore = {};
 export function addCommands(factoryInput) {
   const factory = new Factory(factoryInput);
   [
-    Perform, 
+    Perform,
     Assign,
     Calculate,
-    Lookup,
-    AccumulativeLookup,
-    AssignMany
-  ].forEach((command) => { factory.add(command.name, command)});
+    Copy,
+    Cap
+  ].forEach((command) => { factory.add(command.name, command) });
 
   return factory;
 }
@@ -34,40 +33,64 @@ export class Perform extends BaseCommands.PayrollCommand {
   }
 }
 
+export class Copy extends commands.PayrollCommand {
+  constructor(assignsTo, copyFrom, explain, ...extraDependencies) {
+    super(explain, assignsTo, [copyFrom, ...extraDependencies]);
+    this.copyFrom = copyFrom;
+  }
+
+  execute(workspace) {
+    const ws = workspace.appendTrail(this);
+    return this.addItem(ws, ws.getValue(this.copyFrom));
+  }
+}
+
+
+export class Cap extends BaseCommands.PayrollCommand {
+  constructor(assignsTo, source, noHigherThan, explain) {
+    super(explain, assignsTo, [source, noHigherThan]);
+    this.source = source;
+    this.noHigherThan = noHigherThan;
+  }
+
+  execute(workspace) {
+    const ws = workspace.appendTrail(this);
+    const value = ws.getValueNumeric(this.source);
+    const cap = ws.getValueNumeric(this.noHigherThan);
+
+    return this.addItem(ws, value > cap ? cap : value);
+  }
+}
+
 export class Assign extends BaseCommands.PayrollCommand {
-  constructor([fieldName, input, explanation]) {
-    super();
-    this.fieldName = fieldName;
-    this.input = input;
-    this.explanation = explanation;
+  constructor(assignsTo, value, explain) {
+    super(explain, assignsTo);
+    this.value = value;
   }
 
-  accept(visitor) {
-    visitor.visitAssign(this);
-    return visitor;
+  execute(workspace) {
+    const ws = workspace.appendTrail(this);
+    return this.addItem(ws, this.value);
   }
 
-  execute(dataStore, explainStore) {
-    dataStore[this.fieldName] = this.input;
-    explainStore[this.fieldName] = this.explanation + " [" + this.fieldName + " : " + this.input + "]";
-    return [ dataStore, explainStore ];
+  asJson() {
+    const result = super.asJson();
+    result['constantValue'] = this.value;
+    return result;
   }
 }
 
 export class Calculate extends BaseCommands.PayrollCommand {
-  constructor([fieldName, lhs, operatorText, rhs, explanation]) {
-    super();
-    this.fieldName = fieldName;
-    this.lhs = lhs;
-    this.operatorText = operatorText;
+  constructor(assignsTo, reads1, operatorText, reads2, explain) {
+    super(explain, assignsTo, [reads1, reads2]);
+    this.reads1 = reads1;
     this.operation = {
       "+": (a, b) => a + b,
       "-": (a, b) => a - b,
       "*": (a, b) => a * b,
       "/": (a, b) => (1.0 * a) / b,
     }[operatorText];
-    this.rhs = rhs;
-    this.explanation = explanation;
+    this.reads2 = reads2;
   }
 
   accept(visitor) {
@@ -75,115 +98,18 @@ export class Calculate extends BaseCommands.PayrollCommand {
     return visitor;
   }
 
-  execute(dataStore, explainStore) {
-    dataStore[this.fieldName] = this.operation(dataStore[this.lhs], dataStore[this.rhs]);
+  execute(workspace) {
+    const ws = workspace.append_trail(this);
 
-    explainStore[this.fieldName] = this.explanation + " [" + this.fieldName + " (" + dataStore[this.fieldName] + ") " + " : " + this.lhs + " (" + dataStore[this.lhs] + ") " + this.operatorText + " " + this.rhs + " (" + dataStore[this.rhs] + ")" + "]";
+    const value = this.operation(ws.getValueNumeric(this.reads1), ws.getValueNumeric(this.reads2));
+    return this.addItem(ws, value, { 'calculation': `${this.reads1} ${this.operation} ${this.reads2}` });
+  }
 
-    return [ dataStore, explainStore ];
+  asJson() {
+    const result = super.asJson();
+    result['operation'] = this.operation;
+    return result;
   }
 }
 
-export class Lookup extends BaseCommands.PayrollCommand {
-  constructor([fieldName, input, sourceName, operations, explanation]) {
-    super();
-    this.fieldName = fieldName;
-    this.input = input;
-    this.sourceName = sourceName;
-    this.operations = operations;
-    this.explanation = explanation;
-  }
 
-  accept(visitor) {
-    visitor.visitLookup(this);
-    return visitor;
-  }
-
-  execute(dataStore, explainStore) {
-    for (const option of dataStore[this.sourceName]) {
-      const eval1 = evaluateRange(dataStore[this.input], option.Min, '>=');
-      const eval2 = evaluateRange(dataStore[this.input], option.Max, '<');
-
-      if (eval1 && eval2) {
-        dataStore[this.fieldName] = option;
-      }
-    }
-
-    explainStore[this.fieldName] = this.explanation + " [" + this.fieldName + " : " + this.input + " (" + dataStore[this.input] + ") " + this.operations + " " + this.sourceName + "]";
-
-    return [ dataStore, explainStore ];
-  }
-}
-
-export class AccumulativeLookup extends BaseCommands.PayrollCommand {
-  constructor([fieldName, input, sourceName, accumulateField, explanation]) {
-    super();
-    this.fieldName = fieldName;
-    this.input = input;
-    this.sourceName = sourceName;
-    this.accumulateField = accumulateField;
-    this.explanation = explanation;
-  }
-
-  accept(visitor) {
-    visitor.visitAccumulativeLookup(this);
-    return visitor;
-  }
-
-  execute(dataStore, explainStore) {
-    let totalRebate = 0;
-
-    for (const option of dataStore[this.sourceName]) {
-      const eval1 = evaluateRange(dataStore[this.input], option.Min, ">=");
-      const eval2 = evaluateRange(dataStore[this.input], option.Max, "<");
-
-      if ((eval1 && eval2) || (eval1 && !eval2)) {
-        totalRebate += option[this.accumulateField];
-      }
-    }
-
-    dataStore[this.fieldName] = totalRebate;
-
-    explainStore[this.fieldName] = this.explanation + " [" + this.fieldName + " : " + this.input + " (" + dataStore[this.input] + "), " + this.sourceName + ", " + this.accumulateField + " (" + dataStore[this.fieldName] + ")]";
-
-    return [ dataStore, explainStore ];
-  }
-}
-
-function evaluateRange(InputA, InputB, Operator) {
-  const operators = {
-    ">": (a, b) => { return a > b },
-    "<": (a, b) => { return a < b },
-    ">=": (a, b) => { return a >= b },
-    "<=": (a, b) => { return a <= b },
-    "=": (a, b) => { return a == b },
-  };
-
-  const result = operators[Operator](InputA, InputB);
-
-  return result ? true : false;
-}
-
-export class AssignMany extends BaseCommands.PayrollCommand {
-  constructor([fieldNames, sourceName, explanation]) {
-    super();
-    this.fieldNames = fieldNames;
-    this.sourceName = sourceName;
-    this.explanation = explanation;
-  }
-
-  accept(visitor) {
-    visitor.visitAssignMany(this);
-    return visitor;
-  }
-
-  execute(dataStore, explainStore) {
-    const values = Object.values(dataStore[this.sourceName]);
-
-    for (let index = 0; index < values.length; index++) {
-      dataStore[this.fieldNames[index]] = values[index];
-    }
-
-    return [ dataStore, explainStore ];
-  }
-}

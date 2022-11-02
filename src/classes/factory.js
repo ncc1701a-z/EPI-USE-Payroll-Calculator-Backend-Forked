@@ -21,7 +21,7 @@ export async function loadPlan(planJson, entry) {
    let promises = [];
    let results = [];
 
-   if (!(planJson.Entry && planJson.Plans)) {
+   if (!planJson.Plans) {
       throw new Error('Structure is wrong')
    }
 
@@ -29,21 +29,21 @@ export async function loadPlan(planJson, entry) {
 
    function buildCommand(head, command, results = [], promises = []) {
       const obj = factory.create(head, command);
-      promises.push(obj.async_init());
+      promises.push(obj.asyncInit());
       results.push(obj);
 
       return [results, promises, obj];
    }
 
    Object.entries(planJson.Plans).forEach(([key, value]) => {
-      const plan = buildPlan(value, factory, (obj) => { promises.push(obj.async_init()) });
+      const plan = buildPlan(value, factory, (obj) => { promises.push(obj.asyncInit()) });
       [results, promises] = buildCommand('SavePlan', [plan, key], results, promises);
    });
 
-   [results, promises] = buildCommand('Perform', [entry], results, promises);
+   [results, promises] = buildCommand('Perform', [planJson.Entry], results, promises);
 
    const finalPlan = buildCommand('Plan', [results]).pop();
-   
+
    await Promise.all(promises);
    return finalPlan;
 }
@@ -70,7 +70,7 @@ function buildPlan(input, factory, objHook = null) {
    const params = [];
 
    input.slice(1).forEach((param) => {
-      if (Array.isArray(param) && param.some((value) => { return Array.isArray(value) })) {
+      if (Array.isArray(param)) {
          params.push(buildPlan(param, factory, objHook));
       } else {
          params.push(param);

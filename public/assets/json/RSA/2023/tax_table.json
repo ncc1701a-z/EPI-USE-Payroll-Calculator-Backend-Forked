@@ -1,0 +1,14 @@
+{
+    "style": "percent",
+    "origin": "https://www.sars.gov.za/tax-rates/income-tax/rates-of-tax-for-individuals/",
+    "explain": "Tax rates given gross income as individual",
+    "table": [
+        ["226000", 0.18],
+        ["353100", 0.26],
+        ["488700", 0.31],
+        ["641400", 0.36],
+        ["817600", 0.39],
+        ["1731600", 0.41],
+        [null, 0.45]
+    ]
+}

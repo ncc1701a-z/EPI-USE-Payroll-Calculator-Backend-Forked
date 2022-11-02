@@ -1,0 +1,11 @@
+{
+    "gross_to_net": [
+        ["Perform", "Configuration"],
+        ["Perform", "ExternalInputs"],
+        ["Perform", "Paye"],
+        ["Perform", "UIF"],
+        ["Perform", "Net"],
+        ["Perform", "ExternalOutputs"]
+    ],
+    "gross_up:": []
+}

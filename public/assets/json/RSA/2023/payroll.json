@@ -1,0 +1,48 @@
+{
+  "Entry": "gross_to_net",
+  "Plans": {
+    "gross_to_net": [
+      ["Perform", "ExternalInputs"],
+      ["Perform", "Paye"],
+      ["Perform", "UIF"],
+      ["Perform", "Net"],
+      ["Perform", "ExternalOutputs"]
+  ],
+    "Configuration": ["LoadConfiguration", "public/assets/json/RSA/2023/config.json"],
+    "ExternalInputs": [
+      ["DefineExternalInput", "input", "age", 0, { "required": true, "min": 1, "max": null }],
+      ["DefineExternalInput", "input", "period_gross", 0, { "required": true, "min": 1, "max": null }],
+      ["DefineExternalInput", "dropdown", "pay_period", { "monthly": "12", "weekly": "52", "bi_weekly": "26", "daily": "365" }, { "required": true }],
+      ["DefineExternalInput", "dropdown", "calculation_type", { "gross_to_net": "gross_to_net", "gross_up": "gross_up" }, { "required": true }]
+    ],
+    "Paye": [
+      ["Calculate", "annual_gross", "pay_period", "*", "period_gross", "Annualise the periodic gross"],
+      ["LoadTable", "paye_tax_table", "public/assets/json/RSA/2023/tax_table.json"],
+      ["LoadTable", "paye_rebate_table", "public/assets/json/RSA/2023/tax_rebate.json"],
+      ["Lookup", "raw_paye_tax", "annual_gross", "paye_tax_table", "Calculate raw tax prior to rebate"],
+      ["Lookup", "paye_rebate", "age", "paye_rebate_table", "Calculate rebate amount"],
+      ["Calculate", "annual_paye_tax", "raw_paye_tax", "-", "paye_rebate", "Annual tax adjusted for age-based rebate"],
+      ["Assign", "zero", 0, "Can't go below zero"],
+      ["Calculate", "paye_tax_period_raw", "annual_paye_tax", "/", "pay_period", "Paye due this period"],
+      ["Evaluate", "No PAYE if withholding would be less than zero", "annual_paye_tax", ">", "zero",
+        [["Copy", "paye_tax", "paye_tax_period_raw", "Amount legal for payment"]],
+        [["Copy", "paye_tax", "zero", "paye_tax_period_raw", "No payment when below threshold"]]
+      ]
+    ],
+    "UIF": [      
+      ["Calculate", "de_annualised_uif_cap", "uif_annual_cap", "/", "pay_period", "Deannualise uif"],
+      ["Calculate", "raw_uif", "period_gross", "*", "uif-rate", "One percent of annualised gross"],
+      ["Cap", "uif", "raw_uif", "de_annualised_uif_cap", "Amount charged (ONLY if last pay period for month)"]
+    ],
+    "Net": [
+      ["Calculate", "total_taxes", "paye_tax", "+", "uif", "Total taxes this period"],
+      ["Calculate", "net_period_pay", "period_gross", "-", "total_taxes", "Net after taxes for period"]
+    ],
+    "ExternalOutputs": [
+      ["DefineExternalOutput", "paye_tax", "PAYE tax portion this period"],
+      ["DefineExternalOutput", "uif", "UIF portion for this MONTH"],
+      ["DefineExternalOutput", "total_taxes", "Total tax this period"],
+      ["DefineExternalOutput", "net_period_pay", "Net payable after taxes"]
+    ]
+  }
+}

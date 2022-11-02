@@ -1,0 +1,18 @@
+{
+    "style": "config",
+    "explain": "SA Payroll Config",
+    "values": {
+        "percent-table-style": [
+            "additive",
+            "Subtract the low value from amount, multiply by the rate, then add the base"
+        ],
+        "uif-rate": [
+            0.01,
+            "Percentage of employee earnings for share UIF"
+        ],
+        "uif-annual-cap": [
+            2125.44,
+            "Cap the UIF to at most this amount per month"
+        ]
+    }
+}

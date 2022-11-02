@@ -6,32 +6,41 @@ export function addCommands(factoryInput) {
     [
         Plan,
         SavePlan,
-        Evaluate
+        Evaluate,
     ].forEach((command) => { factory.add(command.name, command) });
 
     return factory;
 }
 
 export class Plan extends BaseCommands.PayrollCommand {
-    constructor([commands]) {
-        super();
-        this.commands = commands;
+    constructor(steps, explain) {
+        super(explain);
+        this.steps = steps ? steps : [];
     }
 
     accept(visitor) {
-        this.commands.forEach((command) => {
-            command.accept(visitor);
+        this.steps.forEach((visitor) => {
+            step.accept(visitor);
         });
 
         return visitor;
     }
 
-    execute(dataStore, explainStore) {
-        this.commands.forEach((command) => {
-            command.execute(dataStore, explainStore);
+    execute(workspace) {
+        let ws = workspace.appendTrail(this, { action: "Entry" });
+        const started = ws.getLastTrailSequence();
+
+        this.steps.forEach((step) => {
+            ws = step.execute(workspace);
         });
 
-        return [ dataStore, explainStore ];
+        return ws.appendTrail(this, { action: "Exit", startedTrailIndex: started });
+    }
+
+    asJson() {
+        let result = super.asJson();
+        result['countSteps'] = this.steps.length;
+        return result;
     }
 }
 
@@ -46,23 +55,25 @@ export class SavePlan extends BaseCommands.PayrollCommand {
         return this.plan.accept(visitor);
     }
 
-    execute(dataStore, explainStore) {
+    execute(workspace) {
         dataStore[this.name] = this.plan;
 
-        return [ dataStore, explainStore ]
+        return [dataStore, explainStore]
     }
 }
 
 export class Evaluate extends BaseCommands.PayrollCommand {
-    constructor([fieldName, value1, operation, value2, ifTrue, ifFalse, explanation]) {
-        super();
-        this.fieldName = fieldName;
-        this.value1 = value1;
+    constructor(explain, lhs, operation, rhs, trueBranch = null, falsebranch = null) {
+        super(explain, null, [lhs, rhs])
+        this.lhs = lhs;
         this.operation = operation;
-        this.value2 = value2;
-        this.ifTrue = ifTrue;
-        this.ifFalse = ifFalse;
-        this.explanation = explanation;
+        this.rhs = rhs;
+        this.trueBranch = trueBranch;
+        this.falseBranch = falseBranch;
+
+        if (!(this.trueBranch || this.falseBranch)) {
+            throw Error(`If ${explain} requires at least one of true or false branch and has neither set`);
+        }
     }
 
     accept(visitor) {
@@ -70,35 +81,40 @@ export class Evaluate extends BaseCommands.PayrollCommand {
         return visitor;
     }
 
-    execute(dataStore, explainStore) {
+    execute(workspace) {
+        let ws = workspace.append_trail(this, { action: "Entry" });
+
+        const lhs = ws.getValueNumeric(this.lhs);
+        const rhs = ws.getValueNumeric(this.rhs);
+
+        let result = null;
+
         switch (this.operation) {
-            case ">":
-                this.result = dataStore[this.value1] > dataStore[this.value2];
-                break;
-            case "<":
-                this.result = dataStore[this.value1] < dataStore[this.value2];
-                break;
-            case "=":
-                this.result = dataStore[this.value1] == dataStore[this.value2];
-                break;
-            case ">=":
-                this.result = dataStore[this.value1] >= dataStore[this.value2];
-                break;
-            case "<=":
-                this.result = dataStore[this.value1] <= dataStore[this.value2];
-                break;
-            default:
-                throw Error(`Invalid operation ${this.operation}`);
+            case ">": result = lhs > rhs; break;
+            case "<": result = lhs < rhs; break;
+            case "=": result = lhs == rhs; break;
+            case ">=": result = lhs >= rhs; break;
+            case "<=": result = lhs <= rhs; break;
+            default: throw Error(`Invalid operation ${this.operation}`);
         }
 
-        explainStore[this.fieldName] = this.explanation + " [" + this.fieldName + " : " + this.value1 + " (" + dataStore[this.value] + ") " + this.operation + " " + this.value2 + " (" + dataStore[this.value2] + ")]";
+        ws = workspace.appendTrail(this, { action: "Start branch", compareResult: result });
+        const started = ws.getLastTrailSequence();
 
-        if (this.result) {
-            this.ifTrue.execute(dataStore, explainStore);
+        if (result) {
+            ws = this.ifTrue.execute(ws);
         } else {
-            this.ifFalse.execute(dataStore, explainStore);
+            ws = this.ifFalse.execute(ws);
         }
 
-        return [ dataStore, explainStore ];
+        return ws.appendTrail(this, { action: "Branch and If completed", startedTrailIndex: started });
+    }
+
+    asJson() {
+        let result = super.asJson();
+        result['operation'] = this.op;
+        result['hasTrue'] = this.trueBranch != null;
+        result['hasFalse'] = this.falseBranch != null;
+        return result;
     }
 }

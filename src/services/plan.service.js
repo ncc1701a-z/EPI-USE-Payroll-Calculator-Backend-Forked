@@ -1,27 +1,47 @@
 import * as factory from "../classes/factory.js";
 import * as visitors from '../classes/visitors.js';
-import { readFile } from 'fs/promises'
+import fs from 'fs';
+import { Workspace } from "../classes/workspace.js";
 
-export const retrievePlan = () => {
-    return 'Hello World';
+const getPayrollFunctions = async (region) => {
+    region = region.toUpperCase();
+
+    const path = `public/assets/json/${region}/2023/functions.json`
+
+    if(!fs.existsSync(path)) {
+        throw Error('Missing payroll functions file');
+    }
+
+    const response = await fs.promises.readFile(path, 'utf-8');    
+    return JSON.parse(response);
 }
 
-export async function loadPlan(calculationType) {
-    const planJson = JSON.parse(await readFile('public/assets/json/plan.json', 'utf-8'));
+export const loadPlan = async (region, calculationType) => {
+    region = region.toUpperCase();
+
+    const path = `public/assets/json/${region}/2023/payroll.json`;
+
+    if(!fs.existsSync(path)) {
+        throw Error('Missing payroll file for region');
+    }
+
+    const planJson = JSON.parse(await fs.promises.readFile(path, 'utf-8'));
+
     return factory.loadPlan(planJson, calculationType);
 }
 
-export async function calculate(data) {
-    let dataStore = {};
-    let explainStore = {};
+export const calculate = async (data) => {
+    let workspace = new Workspace();
 
-    const plan = await loadPlan(data.CalculationType);
+    const payrollFunctions = await getPayrollFunctions(data.region);
 
-    plan.accept(new visitors.DefineExternalInputVisitor(data, dataStore));
+    const plan = await loadPlan(data.region.toUpperCase(), data.calculation_type);
 
-    [dataStore, explainStore] = plan.execute(dataStore, {});
+    plan.accept(new visitors.DefineExternalInputVisitor(data, workspace));
 
-    const calcResult = plan.accept(new visitors.DefineExternalOutputVisitor(dataStore)).output;
+    workspace = plan.execute(workspace);
 
-    return { calcResult, explainStore };
+    const calcResult = plan.accept(new visitors.DefineExternalOutputVisitor(workspace)).output;
+
+    return { calcResult, workspace };
 }

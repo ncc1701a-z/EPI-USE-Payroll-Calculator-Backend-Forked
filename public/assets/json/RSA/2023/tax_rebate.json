@@ -1,0 +1,10 @@
+{
+  "style": "amount",
+  "origin": "https://www.sars.gov.za/tax-rates/income-tax/rates-of-tax-for-individuals/",
+  "explain": "Rebate amount based on age",
+  "table": [
+    ["65", 16425],
+    ["75", 9000],
+    [null, 2997]
+  ]
+}

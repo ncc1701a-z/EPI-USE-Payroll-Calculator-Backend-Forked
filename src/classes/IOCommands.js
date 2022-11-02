@@ -12,12 +12,11 @@ export function addCommands(factoryInput) {
 }
 
 export class DefineExternalInput extends BaseCommands.PayrollCommand {
-    constructor([input, fieldName, type, destination, validate]) {
+    constructor([type, fieldName, value, validate]) {
         super();
-        this.input = input;
         this.fieldName = fieldName;
         this.type = type;
-        this.destination = destination;
+        this.value = value;
         this.validate = validate;
     }
 
@@ -26,16 +25,16 @@ export class DefineExternalInput extends BaseCommands.PayrollCommand {
         return visitor;
     }
 
-    execute(dataStore, explainStore) {      
-        return [ dataStore, explainStore ];
+    execute(dataStore, explainStore) {
+        return [dataStore, explainStore];
     }
 }
 
 export class DefineExternalOutput extends BaseCommands.PayrollCommand {
-    constructor([fieldName, destination]) {
+    constructor([fieldName, explanation]) {
         super();
         this.fieldName = fieldName;
-        this.destination = destination;
+        this.explanation = explanation;
     }
 
     accept(visitor) {
@@ -44,6 +43,6 @@ export class DefineExternalOutput extends BaseCommands.PayrollCommand {
     }
 
     execute(dataStore, explainStore) {
-        return [ dataStore, explainStore ];
+        return [dataStore, explainStore];
     }
 }
