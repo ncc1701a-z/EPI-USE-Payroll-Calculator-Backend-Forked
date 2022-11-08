@@ -18,13 +18,13 @@ export function addCommands(factoryInput) {
 }
 
 export class Perform extends BaseCommands.PayrollCommand {
-  constructor([name]) {
+  constructor(name) {
     super();
     this.name = name;
   }
 
-  execute(dataStore, explainStore) {
-    return dataStore[this.name].execute(dataStore, explainStore);
+  execute(workspace) {    
+    return workspace.getValue(this.name).execute(dataStore, explainStore);
   }
 
   accept(visitor) {
@@ -33,7 +33,7 @@ export class Perform extends BaseCommands.PayrollCommand {
   }
 }
 
-export class Copy extends commands.PayrollCommand {
+export class Copy extends BaseCommands.PayrollCommand {
   constructor(assignsTo, copyFrom, explain, ...extraDependencies) {
     super(explain, assignsTo, [copyFrom, ...extraDependencies]);
     this.copyFrom = copyFrom;

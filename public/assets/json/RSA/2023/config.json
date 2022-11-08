@@ -1,6 +1,5 @@
 {
     "style": "config",
-    "explain": "SA Payroll Config",
     "values": {
         "percent-table-style": [
             "additive",

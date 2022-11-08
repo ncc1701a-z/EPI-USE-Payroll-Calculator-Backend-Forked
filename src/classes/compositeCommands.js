@@ -20,7 +20,7 @@ export class Plan extends BaseCommands.PayrollCommand {
 
     accept(visitor) {
         this.steps.forEach((visitor) => {
-            step.accept(visitor);
+            visitor.accept(visitor);
         });
 
         return visitor;
@@ -45,26 +45,27 @@ export class Plan extends BaseCommands.PayrollCommand {
 }
 
 export class SavePlan extends BaseCommands.PayrollCommand {
-    constructor([plan, name]) {
+    constructor(plan) {
         super();
         this.plan = plan;
-        this.name = name;
     }
 
     accept(visitor) {
-        return this.plan.accept(visitor);
+        // this.plan.forEach((p) => {
+        //     visitor.accept(p);
+        // });
+
+        // return visitor;
     }
 
     execute(workspace) {
-        dataStore[this.name] = this.plan;
 
-        return [dataStore, explainStore]
     }
 }
 
 export class Evaluate extends BaseCommands.PayrollCommand {
-    constructor(explain, lhs, operation, rhs, trueBranch = null, falsebranch = null) {
-        super(explain, null, [lhs, rhs])
+    constructor(explain, lhs, operation, rhs, trueBranch = null, falseBranch = null) {
+        super(explain, null, [lhs, rhs]);
         this.lhs = lhs;
         this.operation = operation;
         this.rhs = rhs;
@@ -102,9 +103,9 @@ export class Evaluate extends BaseCommands.PayrollCommand {
         const started = ws.getLastTrailSequence();
 
         if (result) {
-            ws = this.ifTrue.execute(ws);
+            ws = this.trueBranch.execute(ws);
         } else {
-            ws = this.ifFalse.execute(ws);
+            ws = this.falsebranch.execute(ws);
         }
 
         return ws.appendTrail(this, { action: "Branch and If completed", startedTrailIndex: started });

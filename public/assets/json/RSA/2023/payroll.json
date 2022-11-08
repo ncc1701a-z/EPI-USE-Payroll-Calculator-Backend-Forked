@@ -1,13 +1,6 @@
 {
   "Entry": "gross_to_net",
   "Plans": {
-    "gross_to_net": [
-      ["Perform", "ExternalInputs"],
-      ["Perform", "Paye"],
-      ["Perform", "UIF"],
-      ["Perform", "Net"],
-      ["Perform", "ExternalOutputs"]
-  ],
     "Configuration": ["LoadConfiguration", "public/assets/json/RSA/2023/config.json"],
     "ExternalInputs": [
       ["DefineExternalInput", "input", "age", 0, { "required": true, "min": 1, "max": null }],

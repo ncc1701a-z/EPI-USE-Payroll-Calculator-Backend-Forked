@@ -31,8 +31,7 @@ export class DefineExternalInputVisitor extends BaseVisitor {
   }
 
   visitDefineExternalInput(o) {
-    const field = typeof o.fieldName == 'string' ? o.fieldName : Object.keys(o.fieldName).pop();
-    this.dataStore[field] = this.data[field];
+
   }
 }
 

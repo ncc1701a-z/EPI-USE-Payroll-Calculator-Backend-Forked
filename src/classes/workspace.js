@@ -8,7 +8,7 @@ export class Workspace {
         return new Workspace(this.map, this.trail);
     }
 
-    append_trail(obj, support = {}) {
+    appendTrail(obj, support = {}) {
         let defensive = { ...support };
         defensive['trailIndex'] = this.trail.length;
         this.trail.push([obj, defensive]);

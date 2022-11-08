@@ -37,11 +37,13 @@ export const calculate = async (data) => {
 
     const plan = await loadPlan(data.region.toUpperCase(), data.calculation_type);
 
-    plan.accept(new visitors.DefineExternalInputVisitor(data, workspace));
+    // plan.accept(new visitors.DefineExternalInputVisitor(data, workspace));
 
     workspace = plan.execute(workspace);
 
-    const calcResult = plan.accept(new visitors.DefineExternalOutputVisitor(workspace)).output;
+    console.log(workspace)
+
+    // const calcResult = plan.accept(new visitors.DefineExternalOutputVisitor(workspace)).output;
 
     return { calcResult, workspace };
 }

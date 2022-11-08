@@ -13,7 +13,7 @@ export class Factory {
    }
 
    create(head, command) {
-      return new (this.map.get(head))(command);
+      return new (this.map.get(head))(...command);
    }
 }
 
