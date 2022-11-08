@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "nodemon ./src/main.js"
+    "dev": "nodemon ./src/main.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
